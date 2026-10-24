@@ -1,0 +1,53 @@
+.page {
+  min-height: 100vh;
+  padding: clamp(2rem, 6vw, 4rem);
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, rgba(250, 245, 233, 0.98), #f8f1e4);
+}
+
+.card {
+  width: min(540px, 100%);
+  background: #ffffff;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  border-radius: 2rem;
+  box-shadow: 0 24px 60px rgba(17, 17, 17, 0.07);
+  padding: 2.1rem;
+  display: grid;
+  gap: 1.75rem;
+}
+
+.head {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.head h1 {
+  font-size: clamp(2rem, 3vw, 2.65rem);
+  letter-spacing: -0.05em;
+}
+
+.head p {
+  color: #4c463f;
+  line-height: 1.8;
+}
+
+.form {
+  display: grid;
+  gap: 1rem;
+}
+
+.error {
+  color: #b73827;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.footer {
+  color: #5a534a;
+  font-size: 0.95rem;
+}
+
+.footer a {
+  color: #c17a2d;
+}

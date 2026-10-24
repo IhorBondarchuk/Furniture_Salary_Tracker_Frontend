@@ -1,0 +1,174 @@
+.page {
+  min-height: 100vh;
+  background: #f7eee0;
+}
+
+.shell {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  display: grid;
+  gap: 2rem;
+}
+
+.hero {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.pretitle {
+  display: inline-flex;
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  background: rgba(193, 122, 45, 0.12);
+  color: #7a4f24;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.hero h1 {
+  font-size: clamp(2.1rem, 3vw, 3rem);
+  margin: 0;
+}
+
+.subtitle {
+  max-width: 54rem;
+  color: #4f473f;
+  line-height: 1.75;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.statLabel {
+  color: #7a6d61;
+  font-size: 0.95rem;
+}
+
+.statValue {
+  margin-top: 0.7rem;
+  font-family: var(--font-mono), ui-sans-serif, system-ui, sans-serif;
+  font-size: 2rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 1rem;
+}
+
+.formCard,
+.summaryCard {
+  display: grid;
+  gap: 1rem;
+}
+
+.cardHeader {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.cardHeader h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.cardHeader span {
+  color: #6f655d;
+}
+
+.recordForm,
+.filterGrid {
+  display: grid;
+  gap: 1rem;
+}
+
+.filterGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.formError {
+  color: #b73827;
+  font-size: 0.95rem;
+}
+
+.tableSection {
+  display: grid;
+  gap: 1rem;
+}
+
+.tableHead {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tableHead h2 {
+  margin: 0;
+}
+
+.tableHead span {
+  color: #6f655d;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  border-radius: 1.5rem;
+  background: white;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+}
+
+.table th,
+.table td {
+  padding: 1rem 1.25rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.06);
+}
+
+.table th {
+  font-size: 0.95rem;
+  color: #5a534a;
+  letter-spacing: 0.02em;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table td {
+  color: #332f2a;
+}
+
+.cellCenter {
+  text-align: center;
+  padding: 2rem;
+  color: #6f655d;
+}
+
+.mono {
+  font-family: var(--font-mono), ui-sans-serif, system-ui, sans-serif;
+}
+
+@media (max-width: 900px) {
+  .grid,
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .tableWrapper {
+    min-width: auto;
+  }
+}
