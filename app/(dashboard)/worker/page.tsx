@@ -20,7 +20,7 @@ export default function WorkerPage() {
   const queryClient = useQueryClient();
   const [range, setRange] = useState(defaultMonthRange);
   const [itemId, setItemId] = useState("");
-  const [quantity, setQuantity] = useState("1");
+  const [quantity, setQuantity] = useState("");
   const [date, setDate] = useState(range.to);
   const [formError, setFormError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -56,6 +56,9 @@ export default function WorkerPage() {
     onSuccess() {
       refreshRecords();
       setFormError(null);
+      // дату залишаємо — зазвичай додають кілька записів за один день
+      setItemId("");
+      setQuantity("");
     },
     onError(error) {
       setFormError(error.message);
@@ -86,7 +89,7 @@ export default function WorkerPage() {
   });
 
   const catalogItems = useMemo(() => catalogQuery.data ?? [], [catalogQuery.data]);
-  const selectedItem = useMemo(() => catalogItems.find((item) => item.id === itemId) ?? catalogItems[0], [catalogItems, itemId]);
+  const selectedItem = useMemo(() => catalogItems.find((item) => item.id === itemId), [catalogItems, itemId]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -168,6 +171,9 @@ export default function WorkerPage() {
               </div>
               <form className={styles.recordForm} onSubmit={handleSubmit}>
                 <Select label="Позиція" value={selectedItem?.id ?? ""} onChange={(event) => setItemId(event.target.value)}>
+                  <option value="" disabled>
+                    Оберіть позицію
+                  </option>
                   {catalogItems.map((item) => (
                     <option key={item.id} value={item.id}>
                       {item.name} — {formatMoney(item.price)}
@@ -179,6 +185,7 @@ export default function WorkerPage() {
                   label="Кількість"
                   type="number"
                   min={1}
+                  placeholder="1"
                   value={quantity}
                   step={1}
                   onChange={(event) => setQuantity(event.target.value)}
