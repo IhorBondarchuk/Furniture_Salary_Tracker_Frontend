@@ -11,7 +11,7 @@ import { ProtectedPage } from "@/components/auth/ProtectedPage";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { defaultMonthRange, formatDate, formatMoney } from "@/lib/utils";
+import { defaultMonthRange, formatDate, formatMoney, parsePrice } from "@/lib/utils";
 import styles from "./page.module.css";
 
 export default function AdminPage() {
@@ -92,13 +92,13 @@ export default function AdminPage() {
 
   const handleCreate = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const price = Number(itemPrice);
+    const price = parsePrice(itemPrice);
     if (!itemName.trim()) {
       setCreateError("Введіть назву позиції");
       return;
     }
-    if (!itemPrice || price <= 0) {
-      setCreateError("Ціна має бути більшою за 0");
+    if (price === null || price <= 0) {
+      setCreateError("Введіть ціну більшу за 0, наприклад 12,50");
       return;
     }
     setCreateError(null);
@@ -115,13 +115,13 @@ export default function AdminPage() {
   const handleUpdate = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!editingId) return;
-    const price = Number(editPrice);
+    const price = parsePrice(editPrice);
     if (!editName.trim()) {
       setEditError("Введіть назву позиції");
       return;
     }
-    if (!editPrice || price <= 0) {
-      setEditError("Ціна має бути більшою за 0");
+    if (price === null || price <= 0) {
+      setEditError("Введіть ціну більшу за 0, наприклад 12,50");
       return;
     }
     setEditError(null);
@@ -168,8 +168,9 @@ export default function AdminPage() {
                 <Input label="Назва" value={itemName} onChange={(event) => setItemName(event.target.value)} />
                 <Input
                   label="Базова ціна, zł"
-                  type="number"
-                  min={0}
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="12,50"
                   value={itemPrice}
                   onChange={(event) => setItemPrice(event.target.value)}
                 />
@@ -191,8 +192,8 @@ export default function AdminPage() {
                           <Input label="Назва" value={editName} onChange={(event) => setEditName(event.target.value)} />
                           <Input
                             label="Ціна, zł"
-                            type="number"
-                            min={0}
+                            type="text"
+                            inputMode="decimal"
                             value={editPrice}
                             onChange={(event) => setEditPrice(event.target.value)}
                           />

@@ -13,6 +13,13 @@ export function formatMoney(value: number) {
   }).format(value);
 }
 
+// Ціна з поля вводу: "12", "12.5", "12,50" (до 2 знаків після коми); null — якщо формат невірний
+export function parsePrice(value: string) {
+  const normalized = value.trim().replace(",", ".");
+  if (!/^\d+(\.\d{1,2})?$/.test(normalized)) return null;
+  return Number(normalized);
+}
+
 // YYYY-MM-DD у локальному часовому поясі (toISOString зсуває дату в UTC)
 export function toLocalDateString(date: Date) {
   const year = date.getFullYear();
