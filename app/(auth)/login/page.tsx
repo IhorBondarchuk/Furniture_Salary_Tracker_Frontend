@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { loginUser, logoutUser } from "@/lib/api/auth";
+import { loginUser, translateAuthError } from "@/lib/api/auth";
 import { useAuthStore } from "@/lib/store/auth";
 import type { Role } from "@/lib/types";
 import { useMutation } from "@tanstack/react-query";
@@ -18,18 +18,12 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<Role>("worker");
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [adminCode, setAdminCode] = useState("");
+  const [errors, setErrors] = useState<{ email?: string; password?: string; adminCode?: string }>({});
 
+  // Відповідність ролі та код адміністратора перевіряє бекенд
   const mutation = useMutation({
-    mutationFn: async (payload: { email: string; password: string }) => {
-      const data = await loginUser(payload);
-      // Роль визначає бекенд; вибір лише не пускає працівника через вхід адміністратора.
-      if (role === "admin" && data.user.role !== "admin") {
-        await logoutUser(data.accessToken).catch(() => undefined);
-        throw new Error("Цей обліковий запис не має прав адміністратора");
-      }
-      return data;
-    },
+    mutationFn: loginUser,
     onSuccess(data) {
       setAuth(data);
       router.push(data.user.role === "admin" ? "/admin" : "/worker");
@@ -43,11 +37,12 @@ export default function LoginPage() {
     if (!email.trim()) nextErrors.email = "Введіть електронну пошту";
     if (!password) nextErrors.password = "Введіть пароль";
     if (password && password.length < 6) nextErrors.password = "Пароль має містити щонайменше 6 символів";
+    if (role === "admin" && !adminCode.trim()) nextErrors.adminCode = "Введіть код адміністратора";
 
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
 
-    mutation.mutate({ email, password });
+    mutation.mutate({ email, password, role, adminCode: adminCode.trim() });
   };
 
   return (
@@ -83,7 +78,17 @@ export default function LoginPage() {
             onChange={(event) => setPassword(event.target.value)}
             error={errors.password}
           />
-          {mutation.isError ? <p className={styles.error}>{mutation.error.message}</p> : null}
+          {role === "admin" ? (
+            <Input
+              label="Код адміністратора"
+              type="password"
+              autoComplete="off"
+              value={adminCode}
+              onChange={(event) => setAdminCode(event.target.value)}
+              error={errors.adminCode}
+            />
+          ) : null}
+          {mutation.isError ? <p className={styles.error}>{translateAuthError(mutation.error.message)}</p> : null}
           <Button type="submit" disabled={mutation.isPending}>
             {mutation.isPending ? "Завантаження..." : "Увійти"}
           </Button>

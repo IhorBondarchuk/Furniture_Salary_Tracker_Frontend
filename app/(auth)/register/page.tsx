@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { registerUser } from "@/lib/api/auth";
+import { registerUser, translateAuthError } from "@/lib/api/auth";
 import { useAuthStore } from "@/lib/store/auth";
 import type { Role } from "@/lib/types";
 import { useMutation } from "@tanstack/react-query";
@@ -47,8 +47,7 @@ export default function RegisterPage() {
     mutation.mutate({ name: name.trim(), email, password, role, adminCode: adminCode.trim() });
   };
 
-  const errorMessage =
-    mutation.error?.message === "Invalid admin code" ? "Невірний код адміністратора" : mutation.error?.message;
+  const errorMessage = translateAuthError(mutation.error?.message);
 
   return (
     <main className={styles.page}>

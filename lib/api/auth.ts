@@ -4,19 +4,35 @@ import type { AuthResponse, Role } from "@/lib/types";
 interface AuthCredentials {
   email: string;
   password: string;
+  // роль має збігатися з роллю акаунта; adminCode обов'язковий для "admin"
+  role: Role;
+  adminCode?: string;
 }
 
 interface RegisterData extends AuthCredentials {
   name: string;
-  role: Role;
-  // обов'язковий для role = "admin"
-  adminCode?: string;
+}
+
+const AUTH_ERRORS: Record<string, string> = {
+  "Email or password is wrong": "Невірна електронна пошта або пароль",
+  "Email already in use": "Ця електронна пошта вже зареєстрована",
+  "Invalid admin code": "Невірний код адміністратора",
+  "This account is not an admin": "Цей обліковий запис не має прав адміністратора",
+  "This is an admin account": "Це обліковий запис адміністратора — оберіть роль «Адміністратор»",
+};
+
+export function translateAuthError(message?: string) {
+  return (message && AUTH_ERRORS[message]) || message;
+}
+
+function roleFields(data: AuthCredentials) {
+  return data.role === "admin" ? { role: data.role, adminCode: data.adminCode } : { role: data.role };
 }
 
 export function loginUser(data: AuthCredentials) {
   return apiFetch<AuthResponse>("/auth/login", {
     method: "POST",
-    body: JSON.stringify({ email: data.email, password: data.password }),
+    body: JSON.stringify({ email: data.email, password: data.password, ...roleFields(data) }),
     skipAuth: true,
   });
 }
@@ -28,8 +44,7 @@ export function registerUser(data: RegisterData) {
       name: data.name,
       email: data.email,
       password: data.password,
-      role: data.role,
-      ...(data.role === "admin" ? { adminCode: data.adminCode } : {}),
+      ...roleFields(data),
     }),
     skipAuth: true,
   });
@@ -40,10 +55,8 @@ export function refreshSession() {
 }
 
 // Бекенд вимагає Bearer-токен для logout, тому skipAuth тут не ставимо.
-// token — щоб завершити сесію, яку ще не збережено в сторі.
-export function logoutUser(token?: string) {
+export function logoutUser() {
   return apiFetch("/auth/logout", {
     method: "POST",
-    ...(token ? { token, retry: false } : {}),
   });
 }
