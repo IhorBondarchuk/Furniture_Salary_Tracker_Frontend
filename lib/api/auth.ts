@@ -1,10 +1,16 @@
 import { apiFetch, refreshAccessToken } from "@/lib/api/fetcher";
-import type { AuthResponse } from "@/lib/types";
+import type { AuthResponse, Role } from "@/lib/types";
 
 interface AuthCredentials {
   email: string;
   password: string;
-  name?: string;
+}
+
+interface RegisterData extends AuthCredentials {
+  name: string;
+  role: Role;
+  // обов'язковий для role = "admin"
+  adminCode?: string;
 }
 
 export function loginUser(data: AuthCredentials) {
@@ -15,10 +21,16 @@ export function loginUser(data: AuthCredentials) {
   });
 }
 
-export function registerUser(data: AuthCredentials) {
+export function registerUser(data: RegisterData) {
   return apiFetch<AuthResponse>("/auth/register", {
     method: "POST",
-    body: JSON.stringify({ name: data.name, email: data.email, password: data.password }),
+    body: JSON.stringify({
+      name: data.name,
+      email: data.email,
+      password: data.password,
+      role: data.role,
+      ...(data.role === "admin" ? { adminCode: data.adminCode } : {}),
+    }),
     skipAuth: true,
   });
 }
