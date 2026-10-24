@@ -83,11 +83,17 @@ export async function apiFetch<T = unknown>(endpoint: string, options: ApiOption
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(url, {
-    credentials: "include",
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      credentials: "include",
+      ...options,
+      headers,
+    });
+  } catch {
+    // fetch падає лише без відповіді: сервер вимкнений, немає мережі або CORS
+    throw new Error("Сервер недоступний. Перевірте з'єднання та спробуйте ще раз.");
+  }
 
   if (response.status === 401 && !options.skipAuth && options.retry !== false) {
     const nextToken = await refreshAccessToken();
