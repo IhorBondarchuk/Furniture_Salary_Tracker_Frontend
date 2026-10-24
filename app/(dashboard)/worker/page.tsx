@@ -11,7 +11,7 @@ import { ProtectedPage } from "@/components/auth/ProtectedPage";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
+import { Combobox } from "@/components/ui/Combobox";
 import { defaultMonthRange, formatDate, formatMoney } from "@/lib/utils";
 import styles from "./page.module.css";
 
@@ -90,6 +90,10 @@ export default function WorkerPage() {
 
   const catalogItems = useMemo(() => catalogQuery.data ?? [], [catalogQuery.data]);
   const selectedItem = useMemo(() => catalogItems.find((item) => item.id === itemId), [catalogItems, itemId]);
+  const catalogOptions = useMemo(
+    () => catalogItems.map((item) => ({ id: item.id, name: item.name, hint: formatMoney(item.price) })),
+    [catalogItems],
+  );
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -170,16 +174,7 @@ export default function WorkerPage() {
                 <span>Позиція з каталогу + кількість + дата</span>
               </div>
               <form className={styles.recordForm} onSubmit={handleSubmit}>
-                <Select label="Позиція" value={selectedItem?.id ?? ""} onChange={(event) => setItemId(event.target.value)}>
-                  <option value="" disabled>
-                    Оберіть позицію
-                  </option>
-                  {catalogItems.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name} — {formatMoney(item.price)}
-                    </option>
-                  ))}
-                </Select>
+                <Combobox label="Позиція" options={catalogOptions} value={selectedItem?.id ?? ""} onChange={setItemId} />
 
                 <Input
                   label="Кількість"
@@ -248,13 +243,13 @@ export default function WorkerPage() {
                             />
                           </td>
                           <td>
-                            <Select aria-label="Позиція" value={editItemId} onChange={(event) => setEditItemId(event.target.value)}>
-                              {catalogItems.map((item) => (
-                                <option key={item.id} value={item.id}>
-                                  {item.name} — {formatMoney(item.price)}
-                                </option>
-                              ))}
-                            </Select>
+                            <Combobox
+                              aria-label="Позиція"
+                              options={catalogOptions}
+                              value={editItemId}
+                              onChange={setEditItemId}
+                              floating={false}
+                            />
                           </td>
                           <td>
                             <Input
