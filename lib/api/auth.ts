@@ -40,8 +40,10 @@ export function refreshSession() {
 }
 
 // Бекенд вимагає Bearer-токен для logout, тому skipAuth тут не ставимо.
-export function logoutUser() {
+// token — щоб завершити сесію, яку ще не збережено в сторі.
+export function logoutUser(token?: string) {
   return apiFetch("/auth/logout", {
     method: "POST",
+    ...(token ? { token, retry: false } : {}),
   });
 }
