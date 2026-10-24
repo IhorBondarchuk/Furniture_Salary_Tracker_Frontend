@@ -4,7 +4,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAuthStore } from "@/lib/store/auth";
 import { getCatalog } from "@/lib/api/catalog";
-import { createRecord, getRecords, getSalarySummary } from "@/lib/api/records";
+import { createRecord, deleteRecord, getRecords, getSalarySummary, updateRecord } from "@/lib/api/records";
 import type { CatalogItem, RecordPayload, SalarySummary, WorkRecord } from "@/lib/types";
 import { TopNav } from "@/components/layout/TopNav";
 import { ProtectedPage } from "@/components/auth/ProtectedPage";
@@ -23,6 +23,11 @@ export default function WorkerPage() {
   const [quantity, setQuantity] = useState("1");
   const [date, setDate] = useState(range.to);
   const [formError, setFormError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editItemId, setEditItemId] = useState("");
+  const [editQuantity, setEditQuantity] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [tableError, setTableError] = useState<string | null>(null);
 
   const catalogQuery = useQuery<CatalogItem[]>({
     queryKey: ["catalog"],
@@ -41,15 +46,42 @@ export default function WorkerPage() {
     enabled: Boolean(user),
   });
 
+  const refreshRecords = () => {
+    queryClient.invalidateQueries({ queryKey: ["records"] });
+    queryClient.invalidateQueries({ queryKey: ["summary"] });
+  };
+
   const createMutation = useMutation<WorkRecord, Error, RecordPayload>({
     mutationFn: createRecord,
     onSuccess() {
-      queryClient.invalidateQueries({ queryKey: ["records"] });
-      queryClient.invalidateQueries({ queryKey: ["summary"] });
+      refreshRecords();
       setFormError(null);
     },
     onError(error) {
       setFormError(error.message);
+    },
+  });
+
+  const updateMutation = useMutation<WorkRecord, Error, { id: string; furniture: string; quantity: number; date: string }>({
+    mutationFn: ({ id, ...payload }) => updateRecord(id, payload),
+    onSuccess() {
+      refreshRecords();
+      setEditingId(null);
+      setTableError(null);
+    },
+    onError(error) {
+      setTableError(error.message);
+    },
+  });
+
+  const deleteMutation = useMutation<void, Error, string>({
+    mutationFn: deleteRecord,
+    onSuccess() {
+      refreshRecords();
+      setTableError(null);
+    },
+    onError(error) {
+      setTableError(error.message);
     },
   });
 
@@ -69,6 +101,38 @@ export default function WorkerPage() {
     }
     setFormError(null);
     createMutation.mutate({ furniture: selectedItem.id, quantity: count, date });
+  };
+
+  const startEdit = (record: WorkRecord) => {
+    setEditingId(record.id);
+    setEditItemId(record.itemId);
+    setEditQuantity(String(record.quantity));
+    // дати записів зберігаються як UTC-північ, тому беремо частину YYYY-MM-DD
+    setEditDate(record.date.slice(0, 10));
+    setTableError(null);
+  };
+
+  const handleUpdate = () => {
+    if (!editingId) return;
+    const count = Number(editQuantity);
+    if (!editItemId) {
+      setTableError("Оберіть позицію з каталогу");
+      return;
+    }
+    if (!Number.isInteger(count) || count < 1) {
+      setTableError("Кількість має бути цілим числом, щонайменше 1");
+      return;
+    }
+    if (!editDate) {
+      setTableError("Оберіть дату");
+      return;
+    }
+    updateMutation.mutate({ id: editingId, furniture: editItemId, quantity: count, date: editDate });
+  };
+
+  const handleDelete = (record: WorkRecord) => {
+    if (!window.confirm(`Видалити запис «${record.itemName}» × ${record.quantity} від ${formatDate(record.date)}?`)) return;
+    deleteMutation.mutate(record.id);
   };
 
   return (
@@ -145,6 +209,7 @@ export default function WorkerPage() {
               <h2>Історія записів</h2>
               <span>За період {range.from} – {range.to}</span>
             </div>
+            {tableError ? <p className={styles.formError}>{tableError}</p> : null}
             <div className={styles.tableWrapper}>
               <table className={styles.table}>
                 <thead>
@@ -153,27 +218,86 @@ export default function WorkerPage() {
                     <th>Позиція</th>
                     <th>Кількість</th>
                     <th>Сума</th>
+                    <th>Дії</th>
                   </tr>
                 </thead>
                 <tbody>
                   {recordsQuery.isLoading ? (
                     <tr>
-                      <td colSpan={4} className={styles.cellCenter}>
+                      <td colSpan={5} className={styles.cellCenter}>
                         Завантаження...
                       </td>
                     </tr>
                   ) : recordsQuery.data?.length ? (
-                    recordsQuery.data.map((record) => (
-                      <tr key={record.id}>
-                        <td>{formatDate(record.date)}</td>
-                        <td>{record.itemName}</td>
-                        <td>{record.quantity}</td>
-                        <td className={styles.mono}>{formatMoney(record.earned)}</td>
-                      </tr>
-                    ))
+                    recordsQuery.data.map((record) =>
+                      editingId === record.id ? (
+                        <tr key={record.id}>
+                          <td>
+                            <Input
+                              aria-label="Дата"
+                              type="date"
+                              value={editDate}
+                              onChange={(event) => setEditDate(event.target.value)}
+                            />
+                          </td>
+                          <td>
+                            <Select aria-label="Позиція" value={editItemId} onChange={(event) => setEditItemId(event.target.value)}>
+                              {catalogItems.map((item) => (
+                                <option key={item.id} value={item.id}>
+                                  {item.name} — {formatMoney(item.price)}
+                                </option>
+                              ))}
+                            </Select>
+                          </td>
+                          <td>
+                            <Input
+                              aria-label="Кількість"
+                              type="number"
+                              min={1}
+                              step={1}
+                              value={editQuantity}
+                              onChange={(event) => setEditQuantity(event.target.value)}
+                            />
+                          </td>
+                          <td className={styles.mono}>—</td>
+                          <td>
+                            <div className={styles.actionGroup}>
+                              <Button type="button" variant="secondary" disabled={updateMutation.isPending} onClick={handleUpdate}>
+                                {updateMutation.isPending ? "Зберігаємо..." : "Зберегти"}
+                              </Button>
+                              <Button type="button" variant="ghost" onClick={() => setEditingId(null)}>
+                                Скасувати
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (
+                        <tr key={record.id}>
+                          <td>{formatDate(record.date)}</td>
+                          <td>{record.itemName}</td>
+                          <td>{record.quantity}</td>
+                          <td className={styles.mono}>{formatMoney(record.earned)}</td>
+                          <td>
+                            <div className={styles.actionGroup}>
+                              <Button type="button" variant="secondary" onClick={() => startEdit(record)}>
+                                Редагувати
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                disabled={deleteMutation.isPending && deleteMutation.variables === record.id}
+                                onClick={() => handleDelete(record)}
+                              >
+                                Видалити
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ),
+                    )
                   ) : (
                     <tr>
-                      <td colSpan={4} className={styles.cellCenter}>
+                      <td colSpan={5} className={styles.cellCenter}>
                         Немає записів за обраний період.
                       </td>
                     </tr>

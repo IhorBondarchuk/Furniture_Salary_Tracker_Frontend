@@ -87,6 +87,23 @@ export function createRecord(payload: RecordPayload) {
   }).then(normalizeWorkRecord);
 }
 
+export function updateRecord(id: string, payload: Pick<RecordPayload, "furniture" | "quantity" | "date">) {
+  return apiFetch<ApiWorkEntry>(`/work-entries/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      furniture: payload.furniture,
+      quantity: payload.quantity,
+      date: payload.date,
+    }),
+  }).then(normalizeWorkRecord);
+}
+
+export function deleteRecord(id: string) {
+  return apiFetch<void>(`/work-entries/${id}`, {
+    method: "DELETE",
+  });
+}
+
 export function getSalarySummary(params: RecordsQueryParams) {
   return apiFetch<ApiSalary>(`/work-entries/salary?${buildQuery(params)}`).then(normalizeSalarySummary);
 }
