@@ -23,7 +23,7 @@ export default function Home() {
         <aside className={styles.visual}>
           <div className={styles.metricCard}>
             <span className={styles.metricLabel}>Прибуток за місяць</span>
-            <strong className={styles.metricValue}>₴ 62 400</strong>
+            <strong className={styles.metricValue}>62 400 zł</strong>
           </div>
           <div className={styles.metricCard}>
             <span className={styles.metricLabel}>Деталі зібрано</span>

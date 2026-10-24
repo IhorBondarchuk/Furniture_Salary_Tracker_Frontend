@@ -2,11 +2,14 @@ export function cn(...classes: Array<string | undefined | null | false>) {
   return classes.filter(Boolean).join(" ");
 }
 
+// Польські злоті: "1 250 zł", дробові суми з грошами — "12,50 zł"
 export function formatMoney(value: number) {
   return new Intl.NumberFormat("uk-UA", {
     style: "currency",
-    currency: "UAH",
-    maximumFractionDigits: 0,
+    currency: "PLN",
+    currencyDisplay: "narrowSymbol",
+    minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
+    maximumFractionDigits: 2,
   }).format(value);
 }
 

@@ -167,7 +167,7 @@ export default function AdminPage() {
               <form className={styles.recordForm} onSubmit={handleCreate}>
                 <Input label="Назва" value={itemName} onChange={(event) => setItemName(event.target.value)} />
                 <Input
-                  label="Базова ціна"
+                  label="Базова ціна, zł"
                   type="number"
                   min={0}
                   value={itemPrice}
@@ -190,7 +190,7 @@ export default function AdminPage() {
                         <form className={styles.editForm} onSubmit={handleUpdate}>
                           <Input label="Назва" value={editName} onChange={(event) => setEditName(event.target.value)} />
                           <Input
-                            label="Ціна"
+                            label="Ціна, zł"
                             type="number"
                             min={0}
                             value={editPrice}
