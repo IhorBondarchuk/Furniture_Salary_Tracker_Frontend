@@ -5,15 +5,18 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { loginUser, translateAuthError } from "@/lib/api/auth";
 import { useAuthStore } from "@/lib/store/auth";
+import { useI18n } from "@/lib/store/locale";
 import type { Role } from "@/lib/types";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import styles from "./page.module.css";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const setAuth = useAuthStore((state) => state.setAuth);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,10 +37,10 @@ export default function LoginPage() {
     event.preventDefault();
     const nextErrors: typeof errors = {};
 
-    if (!email.trim()) nextErrors.email = "Введіть електронну пошту";
-    if (!password) nextErrors.password = "Введіть пароль";
-    if (password && password.length < 6) nextErrors.password = "Пароль має містити щонайменше 6 символів";
-    if (role === "admin" && !adminCode.trim()) nextErrors.adminCode = "Введіть код адміністратора";
+    if (!email.trim()) nextErrors.email = t.auth.errors.emailRequired;
+    if (!password) nextErrors.password = t.auth.errors.passwordRequired;
+    if (password && password.length < 6) nextErrors.password = t.auth.errors.passwordTooShort;
+    if (role === "admin" && !adminCode.trim()) nextErrors.adminCode = t.auth.errors.adminCodeRequired;
 
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
@@ -48,22 +51,19 @@ export default function LoginPage() {
   return (
     <main className={styles.page}>
       <div className={styles.card}>
+        <LanguageSwitcher className={styles.lang} />
         <div className={styles.head}>
-          <h1>Вхід до Верстака</h1>
-          <p>
-            {role === "admin"
-              ? "Увійдіть, щоб керувати каталогом меблів та переглядати записи всіх працівників."
-              : "Увійдіть, щоб переглянути свої виробничі записи та розрахунок зарплати."}
-          </p>
+          <h1>{t.login.title}</h1>
+          <p>{role === "admin" ? t.login.adminSubtitle : t.login.workerSubtitle}</p>
         </div>
 
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
-          <Select label="Увійти як" value={role} onChange={(event) => setRole(event.target.value as Role)}>
-            <option value="worker">Працівник</option>
-            <option value="admin">Адміністратор</option>
+          <Select label={t.login.loginAs} value={role} onChange={(event) => setRole(event.target.value as Role)}>
+            <option value="worker">{t.roles.worker}</option>
+            <option value="admin">{t.roles.admin}</option>
           </Select>
           <Input
-            label="Електронна пошта"
+            label={t.auth.email}
             type="email"
             autoComplete="email"
             value={email}
@@ -71,7 +71,7 @@ export default function LoginPage() {
             error={errors.email}
           />
           <Input
-            label="Пароль"
+            label={t.auth.password}
             type="password"
             autoComplete="current-password"
             value={password}
@@ -80,7 +80,7 @@ export default function LoginPage() {
           />
           {role === "admin" ? (
             <Input
-              label="Код адміністратора"
+              label={t.auth.adminCode}
               type="password"
               autoComplete="off"
               value={adminCode}
@@ -88,14 +88,14 @@ export default function LoginPage() {
               error={errors.adminCode}
             />
           ) : null}
-          {mutation.isError ? <p className={styles.error}>{translateAuthError(mutation.error.message)}</p> : null}
+          {mutation.isError ? <p className={styles.error}>{translateAuthError(t, mutation.error.message)}</p> : null}
           <Button type="submit" disabled={mutation.isPending}>
-            {mutation.isPending ? "Завантаження..." : "Увійти"}
+            {mutation.isPending ? t.common.loading : t.common.login}
           </Button>
         </form>
 
         <p className={styles.footer}>
-          Немає облікового запису? <Link href="/register">Зареєструватися</Link>
+          {t.login.noAccount} <Link href="/register">{t.login.registerLink}</Link>
         </p>
       </div>
     </main>

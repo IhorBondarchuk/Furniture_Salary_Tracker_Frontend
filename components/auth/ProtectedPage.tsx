@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store/auth";
+import { useI18n } from "@/lib/store/locale";
 import styles from "./ProtectedPage.module.css";
 
 interface ProtectedPageProps {
@@ -12,6 +13,7 @@ interface ProtectedPageProps {
 
 export function ProtectedPage({ children, role }: ProtectedPageProps) {
   const router = useRouter();
+  const { t } = useI18n();
   const user = useAuthStore((state) => state.user);
   const initialized = useAuthStore((state) => state.initialized);
 
@@ -30,7 +32,7 @@ export function ProtectedPage({ children, role }: ProtectedPageProps) {
     return (
       <div className={styles.waitscreen}>
         <div className={styles.spinner} />
-        <p>Перевірка доступу...</p>
+        <p>{t.common.checkingAccess}</p>
       </div>
     );
   }

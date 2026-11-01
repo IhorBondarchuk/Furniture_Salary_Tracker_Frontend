@@ -3,8 +3,8 @@ export function cn(...classes: Array<string | undefined | null | false>) {
 }
 
 // Польські злоті: "1 250 zł", дробові суми з грошами — "12,50 zł"
-export function formatMoney(value: number) {
-  return new Intl.NumberFormat("uk-UA", {
+export function formatMoney(value: number, intlLocale = "uk-UA") {
+  return new Intl.NumberFormat(intlLocale, {
     style: "currency",
     currency: "PLN",
     currencyDisplay: "narrowSymbol",
@@ -36,8 +36,8 @@ export function defaultMonthRange() {
   };
 }
 
-export function formatDate(value: string) {
-  return new Intl.DateTimeFormat("uk-UA", {
+export function formatDate(value: string, intlLocale = "uk-UA") {
+  return new Intl.DateTimeFormat(intlLocale, {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
