@@ -5,15 +5,18 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { registerUser, translateAuthError } from "@/lib/api/auth";
 import { useAuthStore } from "@/lib/store/auth";
+import { useI18n } from "@/lib/store/locale";
 import type { Role } from "@/lib/types";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import styles from "./page.module.css";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const setAuth = useAuthStore((state) => state.setAuth);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -34,12 +37,12 @@ export default function RegisterPage() {
     event.preventDefault();
     const nextErrors: typeof errors = {};
 
-    if (!name.trim()) nextErrors.name = "Введіть ім'я";
-    else if (name.trim().length < 2) nextErrors.name = "Ім'я має містити щонайменше 2 символи";
-    if (!email.trim()) nextErrors.email = "Введіть електронну пошту";
-    if (!password) nextErrors.password = "Введіть пароль";
-    if (password && password.length < 6) nextErrors.password = "Пароль має містити щонайменше 6 символів";
-    if (role === "admin" && !adminCode.trim()) nextErrors.adminCode = "Введіть код адміністратора";
+    if (!name.trim()) nextErrors.name = t.auth.errors.nameRequired;
+    else if (name.trim().length < 2) nextErrors.name = t.auth.errors.nameTooShort;
+    if (!email.trim()) nextErrors.email = t.auth.errors.emailRequired;
+    if (!password) nextErrors.password = t.auth.errors.passwordRequired;
+    if (password && password.length < 6) nextErrors.password = t.auth.errors.passwordTooShort;
+    if (role === "admin" && !adminCode.trim()) nextErrors.adminCode = t.auth.errors.adminCodeRequired;
 
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
@@ -47,39 +50,40 @@ export default function RegisterPage() {
     mutation.mutate({ name: name.trim(), email, password, role, adminCode: adminCode.trim() });
   };
 
-  const errorMessage = translateAuthError(mutation.error?.message);
+  const errorMessage = translateAuthError(t, mutation.error?.message);
 
   return (
     <main className={styles.page}>
       <div className={styles.card}>
+        <LanguageSwitcher className={styles.lang} />
         <div className={styles.head}>
-          <h1>Реєстрація нового користувача</h1>
-          <p>Створіть обліковий запис для доступу до робочих записів та зарплатних звітів.</p>
+          <h1>{t.register.title}</h1>
+          <p>{t.register.subtitle}</p>
         </div>
 
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
-          <Input label="Ім'я" type="text" value={name} onChange={(event) => setName(event.target.value)} error={errors.name} />
+          <Input label={t.auth.name} type="text" value={name} onChange={(event) => setName(event.target.value)} error={errors.name} />
           <Input
-            label="Електронна пошта"
+            label={t.auth.email}
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             error={errors.email}
           />
           <Input
-            label="Пароль"
+            label={t.auth.password}
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             error={errors.password}
           />
-          <Select label="Роль" value={role} onChange={(event) => setRole(event.target.value as Role)}>
-            <option value="worker">Працівник</option>
-            <option value="admin">Адміністратор</option>
+          <Select label={t.register.role} value={role} onChange={(event) => setRole(event.target.value as Role)}>
+            <option value="worker">{t.roles.worker}</option>
+            <option value="admin">{t.roles.admin}</option>
           </Select>
           {role === "admin" ? (
             <Input
-              label="Код адміністратора"
+              label={t.auth.adminCode}
               type="password"
               autoComplete="off"
               value={adminCode}
@@ -89,12 +93,12 @@ export default function RegisterPage() {
           ) : null}
           {mutation.isError ? <p className={styles.error}>{errorMessage}</p> : null}
           <Button type="submit" disabled={mutation.isPending}>
-            {mutation.isPending ? "Створюємо..." : "Зареєструватися"}
+            {mutation.isPending ? t.register.creating : t.register.submit}
           </Button>
         </form>
 
         <p className={styles.footer}>
-          Вже маєте обліковий запис? <Link href="/login">Увійдіть</Link>
+          {t.register.haveAccount} <Link href="/login">{t.register.loginLink}</Link>
         </p>
       </div>
     </main>

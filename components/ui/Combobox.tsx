@@ -2,6 +2,7 @@
 
 import { useId, useMemo, useState, type KeyboardEvent } from "react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/store/locale";
 import styles from "./Combobox.module.css";
 
 export interface ComboboxOption {
@@ -37,10 +38,11 @@ export function Combobox({
   options,
   value,
   onChange,
-  placeholder = "Почніть вводити назву",
+  placeholder,
   error,
   floating = true,
 }: ComboboxProps) {
+  const { t } = useI18n();
   const id = useId();
   const listId = `${id}-list`;
   const [open, setOpen] = useState(false);
@@ -106,7 +108,7 @@ export function Combobox({
           autoComplete="off"
           // закритий — показує вибрану позицію, відкритий — текст пошуку
           value={open ? query : (selected?.name ?? "")}
-          placeholder={open && selected ? selected.name : placeholder}
+          placeholder={open && selected ? selected.name : (placeholder ?? t.combobox.placeholder)}
           onFocus={openList}
           onClick={() => {
             if (!open) openList();
@@ -145,7 +147,7 @@ export function Combobox({
                 </li>
               ))
             ) : (
-              <li className={styles.empty}>Нічого не знайдено</li>
+              <li className={styles.empty}>{t.combobox.empty}</li>
             )}
           </ul>
         ) : null}

@@ -3,6 +3,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAuthStore } from "@/lib/store/auth";
+import { useI18n } from "@/lib/store/locale";
 import { getCatalog, createCatalogItem, updateCatalogItem, deleteCatalogItem } from "@/lib/api/catalog";
 import { getRecords } from "@/lib/api/records";
 import type { CatalogItem, WorkRecord } from "@/lib/types";
@@ -16,6 +17,7 @@ import styles from "./page.module.css";
 
 export default function AdminPage() {
   const user = useAuthStore((state) => state.user);
+  const { t, intlLocale } = useI18n();
   const queryClient = useQueryClient();
   const [range, setRange] = useState(defaultMonthRange);
   const [itemName, setItemName] = useState("");
@@ -94,11 +96,11 @@ export default function AdminPage() {
     event.preventDefault();
     const price = parsePrice(itemPrice);
     if (!itemName.trim()) {
-      setCreateError("Введіть назву позиції");
+      setCreateError(t.admin.errors.nameRequired);
       return;
     }
     if (price === null || price <= 0) {
-      setCreateError("Введіть ціну більшу за 0, наприклад 12,50");
+      setCreateError(t.admin.errors.priceInvalid);
       return;
     }
     setCreateError(null);
@@ -117,11 +119,11 @@ export default function AdminPage() {
     if (!editingId) return;
     const price = parsePrice(editPrice);
     if (!editName.trim()) {
-      setEditError("Введіть назву позиції");
+      setEditError(t.admin.errors.nameRequired);
       return;
     }
     if (price === null || price <= 0) {
-      setEditError("Введіть ціну більшу за 0, наприклад 12,50");
+      setEditError(t.admin.errors.priceInvalid);
       return;
     }
     setEditError(null);
@@ -129,7 +131,7 @@ export default function AdminPage() {
   };
 
   const handleDelete = (item: CatalogItem) => {
-    if (!window.confirm(`Видалити позицію «${item.name}»?`)) return;
+    if (!window.confirm(t.admin.deleteConfirm(item.name))) return;
     deleteMutation.mutate(item.id);
   };
 
@@ -140,20 +142,18 @@ export default function AdminPage() {
         <div className={styles.shell}>
           <section className={styles.header}>
             <div>
-              <span className={styles.pretitle}>Admin dashboard</span>
-              <h1>Керування каталогом та робочими звітами</h1>
-              <p className={styles.subtitle}>
-                Додавайте позиції, перевіряйте записи всіх працівників та контролюйте виплати.
-              </p>
+              <span className={styles.pretitle}>{t.admin.pretitle}</span>
+              <h1>{t.admin.title}</h1>
+              <p className={styles.subtitle}>{t.admin.subtitle}</p>
             </div>
             <div className={styles.stats}>
               <Card>
-                <p className={styles.statLabel}>Загальна виплата</p>
-                <p className={styles.statValue}>{formatMoney(totalPayments)}</p>
+                <p className={styles.statLabel}>{t.admin.totalPayments}</p>
+                <p className={styles.statValue}>{formatMoney(totalPayments, intlLocale)}</p>
               </Card>
               <Card>
-                <p className={styles.statLabel}>Топ позиція</p>
-                <p className={styles.statValue}>{topItems[0]?.itemName ?? "Немає"}</p>
+                <p className={styles.statLabel}>{t.admin.topItem}</p>
+                <p className={styles.statValue}>{topItems[0]?.itemName ?? t.common.none}</p>
               </Card>
             </div>
           </section>
@@ -161,13 +161,13 @@ export default function AdminPage() {
           <section className={styles.grid}>
             <Card className={styles.adminCard}>
               <div className={styles.cardHeader}>
-                <h2>Каталог меблів</h2>
-                <span>Створюйте та редагуйте позиції для розрахунку зарплатні.</span>
+                <h2>{t.admin.catalogTitle}</h2>
+                <span>{t.admin.catalogHint}</span>
               </div>
               <form className={styles.recordForm} onSubmit={handleCreate}>
-                <Input label="Назва" value={itemName} onChange={(event) => setItemName(event.target.value)} />
+                <Input label={t.admin.name} value={itemName} onChange={(event) => setItemName(event.target.value)} />
                 <Input
-                  label="Базова ціна, zł"
+                  label={t.admin.basePrice}
                   type="text"
                   inputMode="decimal"
                   placeholder="12,50"
@@ -176,22 +176,22 @@ export default function AdminPage() {
                 />
                 {createError ? <p className={styles.formError}>{createError}</p> : null}
                 <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "Зберігаємо..." : "Додати позицію"}
+                  {createMutation.isPending ? t.common.saving : t.admin.addSubmit}
                 </Button>
               </form>
               <div className={styles.catalogList}>
                 {deleteMutation.isError ? <p className={styles.formError}>{deleteMutation.error.message}</p> : null}
                 {catalogQuery.isError ? <p className={styles.formError}>{catalogQuery.error.message}</p> : null}
                 {catalogQuery.isLoading ? (
-                  <p>Завантаження каталогу…</p>
+                  <p>{t.admin.catalogLoading}</p>
                 ) : (
                   catalogQuery.data?.map((item) => (
                     <div key={item.id} className={styles.catalogRow}>
                       {editingId === item.id ? (
                         <form className={styles.editForm} onSubmit={handleUpdate}>
-                          <Input label="Назва" value={editName} onChange={(event) => setEditName(event.target.value)} />
+                          <Input label={t.admin.name} value={editName} onChange={(event) => setEditName(event.target.value)} />
                           <Input
-                            label="Ціна, zł"
+                            label={t.admin.price}
                             type="text"
                             inputMode="decimal"
                             value={editPrice}
@@ -200,10 +200,10 @@ export default function AdminPage() {
                           {editError ? <p className={styles.formError}>{editError}</p> : null}
                           <div className={styles.actionGroup}>
                             <Button type="submit" variant="secondary" disabled={updateMutation.isPending}>
-                              {updateMutation.isPending ? "Зберігаємо..." : "Зберегти"}
+                              {updateMutation.isPending ? t.common.saving : t.common.save}
                             </Button>
                             <Button type="button" variant="ghost" onClick={() => setEditingId(null)}>
-                              Скасувати
+                              {t.common.cancel}
                             </Button>
                           </div>
                         </form>
@@ -211,11 +211,11 @@ export default function AdminPage() {
                         <>
                           <div>
                             <p className={styles.catalogName}>{item.name}</p>
-                            <p className={styles.catalogMeta}>{formatMoney(item.price)}</p>
+                            <p className={styles.catalogMeta}>{formatMoney(item.price, intlLocale)}</p>
                           </div>
                           <div className={styles.actionGroup}>
                             <Button type="button" variant="secondary" onClick={() => startEdit(item)}>
-                              Редагувати
+                              {t.common.edit}
                             </Button>
                             <Button
                               type="button"
@@ -223,7 +223,7 @@ export default function AdminPage() {
                               disabled={deleteMutation.isPending && deleteMutation.variables === item.id}
                               onClick={() => handleDelete(item)}
                             >
-                              Видалити
+                              {t.common.delete}
                             </Button>
                           </div>
                         </>
@@ -236,53 +236,53 @@ export default function AdminPage() {
 
             <Card className={styles.adminCard}>
               <div className={styles.cardHeader}>
-                <h2>Фільтр записів</h2>
-                <span>Переглядайте зарплатні записи за діапазон дат.</span>
+                <h2>{t.admin.filterTitle}</h2>
+                <span>{t.admin.filterHint}</span>
               </div>
               <div className={styles.filterGrid}>
-                <Input label="З" type="date" value={range.from} onChange={(event) => setRange((prev) => ({ ...prev, from: event.target.value }))} />
-                <Input label="До" type="date" value={range.to} onChange={(event) => setRange((prev) => ({ ...prev, to: event.target.value }))} />
+                <Input label={t.common.from} type="date" value={range.from} onChange={(event) => setRange((prev) => ({ ...prev, from: event.target.value }))} />
+                <Input label={t.common.to} type="date" value={range.to} onChange={(event) => setRange((prev) => ({ ...prev, to: event.target.value }))} />
               </div>
             </Card>
           </section>
 
           <section className={styles.recordsSection}>
             <div className={styles.tableHead}>
-              <h2>Записи всіх працівників</h2>
-              <span>Дані оновлюються за період {range.from} – {range.to}</span>
+              <h2>{t.admin.recordsTitle}</h2>
+              <span>{t.admin.period(range.from, range.to)}</span>
             </div>
             <div className={styles.tableWrapper}>
               <table className={styles.table}>
                 <thead>
                   <tr>
-                    <th>Дата</th>
-                    <th>Працівник</th>
-                    <th>Позиція</th>
-                    <th>Кількість</th>
-                    <th>Сума</th>
+                    <th>{t.common.date}</th>
+                    <th>{t.common.worker}</th>
+                    <th>{t.common.item}</th>
+                    <th>{t.common.quantity}</th>
+                    <th>{t.common.amount}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {recordsQuery.isLoading ? (
                     <tr>
                       <td colSpan={5} className={styles.cellCenter}>
-                        Завантаження...
+                        {t.common.loading}
                       </td>
                     </tr>
                   ) : recordsQuery.data?.length ? (
                     recordsQuery.data.map((record) => (
                       <tr key={record.id}>
-                        <td>{formatDate(record.date)}</td>
+                        <td>{formatDate(record.date, intlLocale)}</td>
                         <td>{record.workerName}</td>
                         <td>{record.itemName}</td>
                         <td>{record.quantity}</td>
-                        <td className={styles.mono}>{formatMoney(record.earned)}</td>
+                        <td className={styles.mono}>{formatMoney(record.earned, intlLocale)}</td>
                       </tr>
                     ))
                   ) : (
                     <tr>
                       <td colSpan={5} className={styles.cellCenter}>
-                        Немає записів за обраний період.
+                        {t.common.noRecords}
                       </td>
                     </tr>
                   )}

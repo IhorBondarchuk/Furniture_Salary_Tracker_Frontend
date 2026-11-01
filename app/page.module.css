@@ -4,6 +4,13 @@
   display: grid;
   place-items: center;
   background: linear-gradient(180deg, rgba(250, 245, 233, 0.96), rgba(245, 239, 229, 1));
+  position: relative;
+}
+
+.lang {
+  position: absolute;
+  top: clamp(1rem, 3vw, 2rem);
+  right: clamp(1rem, 3vw, 2rem);
 }
 
 .panel {

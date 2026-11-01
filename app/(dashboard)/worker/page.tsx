@@ -3,6 +3,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAuthStore } from "@/lib/store/auth";
+import { useI18n } from "@/lib/store/locale";
 import { getCatalog } from "@/lib/api/catalog";
 import { createRecord, deleteRecord, getRecords, getSalarySummary, updateRecord } from "@/lib/api/records";
 import type { CatalogItem, RecordPayload, SalarySummary, WorkRecord } from "@/lib/types";
@@ -17,6 +18,7 @@ import styles from "./page.module.css";
 
 export default function WorkerPage() {
   const user = useAuthStore((state) => state.user);
+  const { t, intlLocale } = useI18n();
   const queryClient = useQueryClient();
   const [range, setRange] = useState(defaultMonthRange);
   const [itemId, setItemId] = useState("");
@@ -28,6 +30,9 @@ export default function WorkerPage() {
   const [editQuantity, setEditQuantity] = useState("");
   const [editDate, setEditDate] = useState("");
   const [tableError, setTableError] = useState<string | null>(null);
+  // дії над записами приховані, доки користувач явно не ввімкне режим редагування
+  const [isEditMode, setIsEditMode] = useState(false);
+  const columnCount = isEditMode ? 5 : 4;
 
   const catalogQuery = useQuery<CatalogItem[]>({
     queryKey: ["catalog"],
@@ -91,19 +96,19 @@ export default function WorkerPage() {
   const catalogItems = useMemo(() => catalogQuery.data ?? [], [catalogQuery.data]);
   const selectedItem = useMemo(() => catalogItems.find((item) => item.id === itemId), [catalogItems, itemId]);
   const catalogOptions = useMemo(
-    () => catalogItems.map((item) => ({ id: item.id, name: item.name, hint: formatMoney(item.price) })),
-    [catalogItems],
+    () => catalogItems.map((item) => ({ id: item.id, name: item.name, hint: formatMoney(item.price, intlLocale) })),
+    [catalogItems, intlLocale],
   );
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedItem) {
-      setFormError("Оберіть позицію з каталогу");
+      setFormError(t.worker.errors.itemRequired);
       return;
     }
     const count = Number(quantity);
     if (!Number.isInteger(count) || count < 1) {
-      setFormError("Кількість має бути цілим числом, щонайменше 1");
+      setFormError(t.worker.errors.quantityInvalid);
       return;
     }
     setFormError(null);
@@ -123,23 +128,29 @@ export default function WorkerPage() {
     if (!editingId) return;
     const count = Number(editQuantity);
     if (!editItemId) {
-      setTableError("Оберіть позицію з каталогу");
+      setTableError(t.worker.errors.itemRequired);
       return;
     }
     if (!Number.isInteger(count) || count < 1) {
-      setTableError("Кількість має бути цілим числом, щонайменше 1");
+      setTableError(t.worker.errors.quantityInvalid);
       return;
     }
     if (!editDate) {
-      setTableError("Оберіть дату");
+      setTableError(t.worker.errors.dateRequired);
       return;
     }
     updateMutation.mutate({ id: editingId, furniture: editItemId, quantity: count, date: editDate });
   };
 
   const handleDelete = (record: WorkRecord) => {
-    if (!window.confirm(`Видалити запис «${record.itemName}» × ${record.quantity} від ${formatDate(record.date)}?`)) return;
+    if (!window.confirm(t.worker.deleteConfirm(record.itemName, record.quantity, formatDate(record.date, intlLocale)))) return;
     deleteMutation.mutate(record.id);
+  };
+
+  const toggleEditMode = () => {
+    setIsEditMode((prev) => !prev);
+    setEditingId(null);
+    setTableError(null);
   };
 
   return (
@@ -149,19 +160,17 @@ export default function WorkerPage() {
         <div className={styles.shell}>
           <section className={styles.hero}>
             <div>
-              <span className={styles.pretitle}>Worker dashboard</span>
-              <h1>Мої записи за вибраний період</h1>
-              <p className={styles.subtitle}>
-                Додавайте нові роботи та дивіться розрахунок зарплати за кожну позицію.
-              </p>
+              <span className={styles.pretitle}>{t.worker.pretitle}</span>
+              <h1>{t.worker.title}</h1>
+              <p className={styles.subtitle}>{t.worker.subtitle}</p>
             </div>
             <div className={styles.stats}>
               <Card>
-                <p className={styles.statLabel}>Зароблено</p>
-                <p className={styles.statValue}>{formatMoney(summaryQuery.data?.totalEarned ?? 0)}</p>
+                <p className={styles.statLabel}>{t.worker.earned}</p>
+                <p className={styles.statValue}>{formatMoney(summaryQuery.data?.totalEarned ?? 0, intlLocale)}</p>
               </Card>
               <Card>
-                <p className={styles.statLabel}>Записів</p>
+                <p className={styles.statLabel}>{t.worker.recordsCount}</p>
                 <p className={styles.statValue}>{recordsQuery.data?.length ?? 0}</p>
               </Card>
             </div>
@@ -170,14 +179,14 @@ export default function WorkerPage() {
           <section className={styles.grid}>
             <Card className={styles.formCard}>
               <div className={styles.cardHeader}>
-                <h2>Додати робочий запис</h2>
-                <span>Позиція з каталогу + кількість + дата</span>
+                <h2>{t.worker.addTitle}</h2>
+                <span>{t.worker.addHint}</span>
               </div>
               <form className={styles.recordForm} onSubmit={handleSubmit}>
-                <Combobox label="Позиція" options={catalogOptions} value={selectedItem?.id ?? ""} onChange={setItemId} />
+                <Combobox label={t.common.item} options={catalogOptions} value={selectedItem?.id ?? ""} onChange={setItemId} />
 
                 <Input
-                  label="Кількість"
+                  label={t.common.quantity}
                   type="number"
                   min={1}
                   placeholder="1"
@@ -186,48 +195,53 @@ export default function WorkerPage() {
                   onChange={(event) => setQuantity(event.target.value)}
                 />
 
-                <Input label="Дата" type="date" value={date} onChange={(event) => setDate(event.target.value)} />
+                <Input label={t.common.date} type="date" value={date} onChange={(event) => setDate(event.target.value)} />
                 {formError ? <p className={styles.formError}>{formError}</p> : null}
                 <Button type="submit" disabled={createMutation.isPending || !catalogItems.length}>
-                  {createMutation.isPending ? "Зберігаємо..." : "Додати запис"}
+                  {createMutation.isPending ? t.common.saving : t.worker.addSubmit}
                 </Button>
               </form>
             </Card>
 
             <Card className={styles.summaryCard}>
               <div className={styles.cardHeader}>
-                <h2>Фільтр періоду</h2>
-                <span>Оберіть діапазон дат для розрахунку.</span>
+                <h2>{t.worker.filterTitle}</h2>
+                <span>{t.worker.filterHint}</span>
               </div>
               <div className={styles.filterGrid}>
-                <Input label="З" type="date" value={range.from} onChange={(event) => setRange((prev) => ({ ...prev, from: event.target.value }))} />
-                <Input label="До" type="date" value={range.to} onChange={(event) => setRange((prev) => ({ ...prev, to: event.target.value }))} />
+                <Input label={t.common.from} type="date" value={range.from} onChange={(event) => setRange((prev) => ({ ...prev, from: event.target.value }))} />
+                <Input label={t.common.to} type="date" value={range.to} onChange={(event) => setRange((prev) => ({ ...prev, to: event.target.value }))} />
               </div>
             </Card>
           </section>
 
           <section className={styles.tableSection}>
             <div className={styles.tableHead}>
-              <h2>Історія записів</h2>
-              <span>За період {range.from} – {range.to}</span>
+              <div className={styles.tableTitle}>
+                <h2>{t.worker.historyTitle}</h2>
+                <span>{t.worker.period(range.from, range.to)}</span>
+              </div>
+              <Button type="button" variant={isEditMode ? "primary" : "secondary"} onClick={toggleEditMode}>
+                {isEditMode ? t.common.done : t.common.edit}
+              </Button>
             </div>
             {tableError ? <p className={styles.formError}>{tableError}</p> : null}
             <div className={styles.tableWrapper}>
               <table className={styles.table}>
                 <thead>
                   <tr>
-                    <th>Дата</th>
-                    <th>Позиція</th>
-                    <th>Кількість</th>
-                    <th>Сума</th>
-                    <th>Дії</th>
+                    <th>{t.common.date}</th>
+                    <th>{t.common.item}</th>
+                    <th>{t.common.quantity}</th>
+                    <th>{t.common.amount}</th>
+                    {isEditMode ? <th>{t.common.actions}</th> : null}
                   </tr>
                 </thead>
                 <tbody>
                   {recordsQuery.isLoading ? (
                     <tr>
-                      <td colSpan={5} className={styles.cellCenter}>
-                        Завантаження...
+                      <td colSpan={columnCount} className={styles.cellCenter}>
+                        {t.common.loading}
                       </td>
                     </tr>
                   ) : recordsQuery.data?.length ? (
@@ -236,7 +250,7 @@ export default function WorkerPage() {
                         <tr key={record.id}>
                           <td>
                             <Input
-                              aria-label="Дата"
+                              aria-label={t.common.date}
                               type="date"
                               value={editDate}
                               onChange={(event) => setEditDate(event.target.value)}
@@ -244,7 +258,7 @@ export default function WorkerPage() {
                           </td>
                           <td>
                             <Combobox
-                              aria-label="Позиція"
+                              aria-label={t.common.item}
                               options={catalogOptions}
                               value={editItemId}
                               onChange={setEditItemId}
@@ -253,7 +267,7 @@ export default function WorkerPage() {
                           </td>
                           <td>
                             <Input
-                              aria-label="Кількість"
+                              aria-label={t.common.quantity}
                               type="number"
                               min={1}
                               step={1}
@@ -265,42 +279,44 @@ export default function WorkerPage() {
                           <td>
                             <div className={styles.actionGroup}>
                               <Button type="button" variant="secondary" disabled={updateMutation.isPending} onClick={handleUpdate}>
-                                {updateMutation.isPending ? "Зберігаємо..." : "Зберегти"}
+                                {updateMutation.isPending ? t.common.saving : t.common.save}
                               </Button>
                               <Button type="button" variant="ghost" onClick={() => setEditingId(null)}>
-                                Скасувати
+                                {t.common.cancel}
                               </Button>
                             </div>
                           </td>
                         </tr>
                       ) : (
                         <tr key={record.id}>
-                          <td>{formatDate(record.date)}</td>
+                          <td>{formatDate(record.date, intlLocale)}</td>
                           <td>{record.itemName}</td>
                           <td>{record.quantity}</td>
-                          <td className={styles.mono}>{formatMoney(record.earned)}</td>
-                          <td>
-                            <div className={styles.actionGroup}>
-                              <Button type="button" variant="secondary" onClick={() => startEdit(record)}>
-                                Редагувати
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                disabled={deleteMutation.isPending && deleteMutation.variables === record.id}
-                                onClick={() => handleDelete(record)}
-                              >
-                                Видалити
-                              </Button>
-                            </div>
-                          </td>
+                          <td className={styles.mono}>{formatMoney(record.earned, intlLocale)}</td>
+                          {isEditMode ? (
+                            <td>
+                              <div className={styles.actionGroup}>
+                                <Button type="button" variant="secondary" onClick={() => startEdit(record)}>
+                                  {t.common.edit}
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  disabled={deleteMutation.isPending && deleteMutation.variables === record.id}
+                                  onClick={() => handleDelete(record)}
+                                >
+                                  {t.common.delete}
+                                </Button>
+                              </div>
+                            </td>
+                          ) : null}
                         </tr>
                       ),
                     )
                   ) : (
                     <tr>
-                      <td colSpan={5} className={styles.cellCenter}>
-                        Немає записів за обраний період.
+                      <td colSpan={columnCount} className={styles.cellCenter}>
+                        {t.common.noRecords}
                       </td>
                     </tr>
                   )}

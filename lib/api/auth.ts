@@ -1,5 +1,6 @@
 import { apiFetch, refreshAccessToken } from "@/lib/api/fetcher";
 import type { AuthResponse, Role } from "@/lib/types";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 interface AuthCredentials {
   email: string;
@@ -13,16 +14,18 @@ interface RegisterData extends AuthCredentials {
   name: string;
 }
 
-const AUTH_ERRORS: Record<string, string> = {
-  "Email or password is wrong": "Невірна електронна пошта або пароль",
-  "Email already in use": "Ця електронна пошта вже зареєстрована",
-  "Invalid admin code": "Невірний код адміністратора",
-  "This account is not an admin": "Цей обліковий запис не має прав адміністратора",
-  "This is an admin account": "Це обліковий запис адміністратора — оберіть роль «Адміністратор»",
+// Повідомлення бекенду (англійською) → ключ перекладу
+const AUTH_ERRORS: Record<string, keyof Dictionary["auth"]["server"]> = {
+  "Email or password is wrong": "wrongCredentials",
+  "Email already in use": "emailInUse",
+  "Invalid admin code": "invalidAdminCode",
+  "This account is not an admin": "notAdmin",
+  "This is an admin account": "isAdmin",
 };
 
-export function translateAuthError(message?: string) {
-  return (message && AUTH_ERRORS[message]) || message;
+export function translateAuthError(t: Dictionary, message?: string) {
+  const key = message ? AUTH_ERRORS[message] : undefined;
+  return key ? t.auth.server[key] : message;
 }
 
 function roleFields(data: AuthCredentials) {

@@ -51,3 +51,7 @@
 .footer a {
   color: #c17a2d;
 }
+
+.lang {
+  justify-self: end;
+}

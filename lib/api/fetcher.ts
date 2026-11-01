@@ -1,4 +1,5 @@
 import { authStore } from "@/lib/store/auth";
+import { getDictionary } from "@/lib/store/locale";
 import type { AuthResponse, UserPayload } from "@/lib/types";
 
 export interface ApiOptions extends RequestInit {
@@ -92,7 +93,7 @@ export async function apiFetch<T = unknown>(endpoint: string, options: ApiOption
     });
   } catch {
     // fetch падає лише без відповіді: сервер вимкнений, немає мережі або CORS
-    throw new Error("Сервер недоступний. Перевірте з'єднання та спробуйте ще раз.");
+    throw new Error(getDictionary().errors.network);
   }
 
   if (response.status === 401 && !options.skipAuth && options.retry !== false) {
