@@ -25,16 +25,6 @@ export default function Home() {
             </Link>
           </div>
         </div>
-        <aside className={styles.visual}>
-          <div className={styles.metricCard}>
-            <span className={styles.metricLabel}>{t.home.monthlyProfit}</span>
-            <strong className={styles.metricValue}>62 400 zł</strong>
-          </div>
-          <div className={styles.metricCard}>
-            <span className={styles.metricLabel}>{t.home.itemsAssembled}</span>
-            <strong className={styles.metricValue}>{t.home.itemsCount}</strong>
-          </div>
-        </aside>
       </section>
     </main>
   );

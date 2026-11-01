@@ -56,11 +56,7 @@ const uk = {
     badge: "Верстак — облік зарплат меблевих бригад",
     title: "Прозорий інтерфейс для контролю робочих результатів.",
     description:
-      "Реєструйте збирання меблів, дивіться місячні підсумки та керуйте каталогом у зрозумілому та концентрованому UI.",
-    monthlyProfit: "Прибуток за місяць",
-    itemsAssembled: "Деталі зібрано",
-    itemsCount: "16 позицій",
-  },
+      "Реєструйте збирання меблів, дивіться місячні підсумки та керуйте каталогом у зрозумілому та концентрованому UI.",  },
   auth: {
     email: "Електронна пошта",
     password: "Пароль",
@@ -193,11 +189,7 @@ const pl: Dictionary = {
     badge: "Warsztat — rozliczanie wynagrodzeń brygad meblowych",
     title: "Przejrzysty interfejs do kontroli wyników pracy.",
     description:
-      "Rejestruj montaż mebli, przeglądaj miesięczne podsumowania i zarządzaj katalogiem w czytelnym, skupionym interfejsie.",
-    monthlyProfit: "Zarobek w miesiącu",
-    itemsAssembled: "Zmontowane elementy",
-    itemsCount: "16 pozycji",
-  },
+      "Rejestruj montaż mebli, przeglądaj miesięczne podsumowania i zarządzaj katalogiem w czytelnym, skupionym interfejsie.",  },
   auth: {
     email: "E-mail",
     password: "Hasło",
@@ -328,11 +320,7 @@ const en: Dictionary = {
     badge: "Workbench — payroll tracking for furniture crews",
     title: "A transparent interface for tracking work results.",
     description:
-      "Log furniture assembly, review monthly totals and manage the catalog in a clear, focused UI.",
-    monthlyProfit: "Monthly earnings",
-    itemsAssembled: "Parts assembled",
-    itemsCount: "16 items",
-  },
+      "Log furniture assembly, review monthly totals and manage the catalog in a clear, focused UI.",  },
   auth: {
     email: "Email",
     password: "Password",

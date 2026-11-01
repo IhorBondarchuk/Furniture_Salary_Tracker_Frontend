@@ -15,10 +15,6 @@
 
 .panel {
   width: min(1120px, 100%);
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 2rem;
-  align-items: stretch;
 }
 
 .intro {
@@ -27,6 +23,7 @@
 }
 
 .badge {
+  justify-self: start;
   display: inline-flex;
   align-items: center;
   padding: 0.75rem 1rem;
@@ -90,37 +87,4 @@
 
 .secondary:hover {
   background: rgba(242, 234, 212, 0.9);
-}
-
-.visual {
-  display: grid;
-  gap: 1rem;
-}
-
-.metricCard {
-  padding: 1.75rem;
-  background: #ffffff;
-  border: 1px solid rgba(17, 17, 17, 0.08);
-  border-radius: 1.5rem;
-  box-shadow: 0 18px 45px rgba(17, 17, 17, 0.06);
-}
-
-.metricLabel {
-  display: block;
-  margin-bottom: 0.75rem;
-  color: #6f6b65;
-  font-size: 0.95rem;
-  letter-spacing: 0.03em;
-}
-
-.metricValue {
-  font-family: var(--font-mono), ui-sans-serif, system-ui, sans-serif;
-  font-size: 2rem;
-  color: #111111;
-}
-
-@media (max-width: 960px) {
-  .panel {
-    grid-template-columns: 1fr;
-  }
 }
