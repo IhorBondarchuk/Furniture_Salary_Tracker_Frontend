@@ -43,15 +43,6 @@
   line-height: 1.6;
 }
 
-.footer {
-  color: #5a534a;
-  font-size: 0.95rem;
-}
-
-.footer a {
-  color: #c17a2d;
-}
-
 .lang {
   justify-self: end;
 }

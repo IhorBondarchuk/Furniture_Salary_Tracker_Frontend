@@ -1,31 +1,324 @@
 'use client';
 
-import Link from "next/link";
-import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { useMemo, useState, type FormEvent } from "react";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useI18n } from "@/lib/store/locale";
+import { getCatalog } from "@/lib/api/catalog";
+import { createRecord, deleteRecord, getRecords, getSalarySummary, updateRecord } from "@/lib/api/records";
+import type { CatalogItem, RecordPayload, SalarySummary, WorkRecord } from "@/lib/types";
+import { TopNav } from "@/components/layout/TopNav";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { Combobox } from "@/components/ui/Combobox";
+import { defaultMonthRange, formatDate, formatMoney } from "@/lib/utils";
 import styles from "./page.module.css";
 
-export default function Home() {
-  const { t } = useI18n();
+export default function RecordsPage() {
+  const { t, intlLocale } = useI18n();
+  const queryClient = useQueryClient();
+  const [range, setRange] = useState(defaultMonthRange);
+  const [itemId, setItemId] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [date, setDate] = useState(range.to);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editItemId, setEditItemId] = useState("");
+  const [editQuantity, setEditQuantity] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [tableError, setTableError] = useState<string | null>(null);
+  // дії над записами приховані, доки користувач явно не ввімкне режим редагування
+  const [isEditMode, setIsEditMode] = useState(false);
+  const columnCount = isEditMode ? 5 : 4;
+
+  const catalogQuery = useQuery<CatalogItem[]>({
+    queryKey: ["catalog"],
+    queryFn: getCatalog,
+  });
+
+  const recordsQuery = useQuery<WorkRecord[]>({
+    queryKey: ["records", range.from, range.to],
+    queryFn: () => getRecords({ from: range.from, to: range.to }),
+  });
+
+  const summaryQuery = useQuery<SalarySummary>({
+    queryKey: ["summary", range.from, range.to],
+    queryFn: () => getSalarySummary({ from: range.from, to: range.to }),
+  });
+
+  const refreshRecords = () => {
+    queryClient.invalidateQueries({ queryKey: ["records"] });
+    queryClient.invalidateQueries({ queryKey: ["summary"] });
+  };
+
+  const createMutation = useMutation<WorkRecord, Error, RecordPayload>({
+    mutationFn: createRecord,
+    onSuccess() {
+      refreshRecords();
+      setFormError(null);
+      // дату залишаємо — зазвичай додають кілька записів за один день
+      setItemId("");
+      setQuantity("");
+    },
+    onError(error) {
+      setFormError(error.message);
+    },
+  });
+
+  const updateMutation = useMutation<WorkRecord, Error, { id: string; furniture: string; quantity: number; date: string }>({
+    mutationFn: ({ id, ...payload }) => updateRecord(id, payload),
+    onSuccess() {
+      refreshRecords();
+      setEditingId(null);
+      setTableError(null);
+    },
+    onError(error) {
+      setTableError(error.message);
+    },
+  });
+
+  const deleteMutation = useMutation<void, Error, string>({
+    mutationFn: deleteRecord,
+    onSuccess() {
+      refreshRecords();
+      setTableError(null);
+    },
+    onError(error) {
+      setTableError(error.message);
+    },
+  });
+
+  const catalogItems = useMemo(() => catalogQuery.data ?? [], [catalogQuery.data]);
+  const selectedItem = useMemo(() => catalogItems.find((item) => item.id === itemId), [catalogItems, itemId]);
+  const catalogOptions = useMemo(
+    () => catalogItems.map((item) => ({ id: item.id, name: item.name, hint: formatMoney(item.price, intlLocale) })),
+    [catalogItems, intlLocale],
+  );
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!selectedItem) {
+      setFormError(t.worker.errors.itemRequired);
+      return;
+    }
+    const count = Number(quantity);
+    if (!Number.isInteger(count) || count < 1) {
+      setFormError(t.worker.errors.quantityInvalid);
+      return;
+    }
+    setFormError(null);
+    createMutation.mutate({ furniture: selectedItem.id, quantity: count, date });
+  };
+
+  const startEdit = (record: WorkRecord) => {
+    setEditingId(record.id);
+    setEditItemId(record.itemId);
+    setEditQuantity(String(record.quantity));
+    // дати записів зберігаються як UTC-північ, тому беремо частину YYYY-MM-DD
+    setEditDate(record.date.slice(0, 10));
+    setTableError(null);
+  };
+
+  const handleUpdate = () => {
+    if (!editingId) return;
+    const count = Number(editQuantity);
+    if (!editItemId) {
+      setTableError(t.worker.errors.itemRequired);
+      return;
+    }
+    if (!Number.isInteger(count) || count < 1) {
+      setTableError(t.worker.errors.quantityInvalid);
+      return;
+    }
+    if (!editDate) {
+      setTableError(t.worker.errors.dateRequired);
+      return;
+    }
+    updateMutation.mutate({ id: editingId, furniture: editItemId, quantity: count, date: editDate });
+  };
+
+  const handleDelete = (record: WorkRecord) => {
+    if (!window.confirm(t.worker.deleteConfirm(record.itemName, record.quantity, formatDate(record.date, intlLocale)))) return;
+    deleteMutation.mutate(record.id);
+  };
+
+  const toggleEditMode = () => {
+    setIsEditMode((prev) => !prev);
+    setEditingId(null);
+    setTableError(null);
+  };
 
   return (
-    <main className={styles.hero}>
-      <LanguageSwitcher className={styles.lang} />
-      <section className={styles.panel}>
-        <div className={styles.intro}>
-          <span className={styles.badge}>{t.home.badge}</span>
-          <h1>{t.home.title}</h1>
-          <p className={styles.description}>{t.home.description}</p>
-          <div className={styles.actions}>
-            <Link href="/login" className={styles.primary}>
-              {t.common.login}
-            </Link>
-            <Link href="/register" className={styles.secondary}>
-              {t.common.register}
-            </Link>
+    <div className={styles.page}>
+      <TopNav />
+      <div className={styles.shell}>
+        <section className={styles.hero}>
+          <div>
+            <span className={styles.pretitle}>{t.worker.pretitle}</span>
+            <h1>{t.worker.title}</h1>
+            <p className={styles.subtitle}>{t.worker.subtitle}</p>
           </div>
-        </div>
-      </section>
-    </main>
+          <div className={styles.stats}>
+            <Card>
+              <p className={styles.statLabel}>{t.worker.earned}</p>
+              <p className={styles.statValue}>{formatMoney(summaryQuery.data?.totalEarned ?? 0, intlLocale)}</p>
+            </Card>
+            <Card>
+              <p className={styles.statLabel}>{t.worker.recordsCount}</p>
+              <p className={styles.statValue}>{recordsQuery.data?.length ?? 0}</p>
+            </Card>
+          </div>
+        </section>
+
+        <section className={styles.grid}>
+          <Card className={styles.formCard}>
+            <div className={styles.cardHeader}>
+              <h2>{t.worker.addTitle}</h2>
+              <span>{t.worker.addHint}</span>
+            </div>
+            <form className={styles.recordForm} onSubmit={handleSubmit}>
+              <Combobox label={t.common.item} options={catalogOptions} value={selectedItem?.id ?? ""} onChange={setItemId} />
+
+              <Input
+                label={t.common.quantity}
+                type="number"
+                min={1}
+                placeholder="1"
+                value={quantity}
+                step={1}
+                onChange={(event) => setQuantity(event.target.value)}
+              />
+
+              <Input label={t.common.date} type="date" value={date} onChange={(event) => setDate(event.target.value)} />
+              {formError ? <p className={styles.formError}>{formError}</p> : null}
+              <Button type="submit" disabled={createMutation.isPending || !catalogItems.length}>
+                {createMutation.isPending ? t.common.saving : t.worker.addSubmit}
+              </Button>
+            </form>
+          </Card>
+
+          <Card className={styles.summaryCard}>
+            <div className={styles.cardHeader}>
+              <h2>{t.worker.filterTitle}</h2>
+              <span>{t.worker.filterHint}</span>
+            </div>
+            <div className={styles.filterGrid}>
+              <Input label={t.common.from} type="date" value={range.from} onChange={(event) => setRange((prev) => ({ ...prev, from: event.target.value }))} />
+              <Input label={t.common.to} type="date" value={range.to} onChange={(event) => setRange((prev) => ({ ...prev, to: event.target.value }))} />
+            </div>
+          </Card>
+        </section>
+
+        <section className={styles.tableSection}>
+          <div className={styles.tableHead}>
+            <div className={styles.tableTitle}>
+              <h2>{t.worker.historyTitle}</h2>
+              <span>{t.worker.period(range.from, range.to)}</span>
+            </div>
+            <Button type="button" variant={isEditMode ? "primary" : "secondary"} onClick={toggleEditMode}>
+              {isEditMode ? t.common.done : t.common.edit}
+            </Button>
+          </div>
+          {tableError ? <p className={styles.formError}>{tableError}</p> : null}
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>{t.common.date}</th>
+                  <th>{t.common.item}</th>
+                  <th>{t.common.quantity}</th>
+                  <th>{t.common.amount}</th>
+                  {isEditMode ? <th>{t.common.actions}</th> : null}
+                </tr>
+              </thead>
+              <tbody>
+                {recordsQuery.isLoading ? (
+                  <tr>
+                    <td colSpan={columnCount} className={styles.cellCenter}>
+                      {t.common.loading}
+                    </td>
+                  </tr>
+                ) : recordsQuery.data?.length ? (
+                  recordsQuery.data.map((record) =>
+                    editingId === record.id ? (
+                      <tr key={record.id}>
+                        <td>
+                          <Input
+                            aria-label={t.common.date}
+                            type="date"
+                            value={editDate}
+                            onChange={(event) => setEditDate(event.target.value)}
+                          />
+                        </td>
+                        <td>
+                          <Combobox
+                            aria-label={t.common.item}
+                            options={catalogOptions}
+                            value={editItemId}
+                            onChange={setEditItemId}
+                            floating={false}
+                          />
+                        </td>
+                        <td>
+                          <Input
+                            aria-label={t.common.quantity}
+                            type="number"
+                            min={1}
+                            step={1}
+                            value={editQuantity}
+                            onChange={(event) => setEditQuantity(event.target.value)}
+                          />
+                        </td>
+                        <td className={styles.mono}>—</td>
+                        <td>
+                          <div className={styles.actionGroup}>
+                            <Button type="button" variant="secondary" disabled={updateMutation.isPending} onClick={handleUpdate}>
+                              {updateMutation.isPending ? t.common.saving : t.common.save}
+                            </Button>
+                            <Button type="button" variant="ghost" onClick={() => setEditingId(null)}>
+                              {t.common.cancel}
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      <tr key={record.id}>
+                        <td>{formatDate(record.date, intlLocale)}</td>
+                        <td>{record.itemName}</td>
+                        <td>{record.quantity}</td>
+                        <td className={styles.mono}>{formatMoney(record.earned, intlLocale)}</td>
+                        {isEditMode ? (
+                          <td>
+                            <div className={styles.actionGroup}>
+                              <Button type="button" variant="secondary" onClick={() => startEdit(record)}>
+                                {t.common.edit}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                disabled={deleteMutation.isPending && deleteMutation.variables === record.id}
+                                onClick={() => handleDelete(record)}
+                              >
+                                {t.common.delete}
+                              </Button>
+                            </div>
+                          </td>
+                        ) : null}
+                      </tr>
+                    ),
+                  )
+                ) : (
+                  <tr>
+                    <td colSpan={columnCount} className={styles.cellCenter}>
+                      {t.common.noRecords}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
   );
 }
