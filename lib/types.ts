@@ -1,17 +1,3 @@
-export type Role = "worker" | "admin";
-
-export interface UserPayload {
-  id: string;
-  name: string;
-  email: string;
-  role: Role;
-}
-
-export interface AuthResponse {
-  accessToken: string;
-  user: UserPayload;
-}
-
 export interface CatalogItem {
   id: string;
   name: string;
@@ -20,8 +6,6 @@ export interface CatalogItem {
 
 export interface WorkRecord {
   id: string;
-  workerId: string;
-  workerName: string;
   itemId: string;
   itemName: string;
   quantity: number;
@@ -30,7 +14,6 @@ export interface WorkRecord {
 }
 
 export interface RecordPayload {
-  worker?: string;
   furniture: string;
   quantity: number;
   date?: string;

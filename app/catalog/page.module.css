@@ -1,0 +1,112 @@
+.page {
+  min-height: 100vh;
+  background: #f7eee0;
+}
+
+.shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  display: grid;
+  gap: 2rem;
+}
+
+.header {
+  display: grid;
+  justify-items: start;
+  gap: 1.5rem;
+}
+
+.pretitle {
+  display: inline-flex;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  background: rgba(193, 122, 45, 0.14);
+  color: #7a4f24;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: clamp(2.2rem, 3vw, 3.25rem);
+}
+
+.subtitle {
+  max-width: 56rem;
+  color: #4f473f;
+  line-height: 1.7;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 0.8fr 1fr;
+  align-items: start;
+  gap: 1rem;
+}
+
+.card {
+  display: grid;
+  gap: 1rem;
+}
+
+.cardHeader {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.cardHeader h2 {
+  margin: 0;
+}
+
+.cardHeader span {
+  color: #6f655d;
+}
+
+.form {
+  display: grid;
+  gap: 1rem;
+}
+
+.catalogList {
+  display: grid;
+  gap: 1rem;
+}
+
+.catalogRow {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  border-radius: 1.25rem;
+  background: #ffffff;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+}
+
+.catalogName {
+  font-weight: 700;
+  margin: 0;
+}
+
+.catalogMeta {
+  color: #6f655d;
+  font-family: var(--font-mono), ui-sans-serif, system-ui, sans-serif;
+}
+
+.actionGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.formError {
+  color: #b73827;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 960px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

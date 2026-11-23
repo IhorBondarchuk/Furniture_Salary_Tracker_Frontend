@@ -1,90 +1,188 @@
-.hero {
+.page {
   min-height: 100vh;
-  padding: clamp(2rem, 6vw, 5rem);
+  background: #f7eee0;
+}
+
+.shell {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 3rem);
   display: grid;
-  place-items: center;
-  background: linear-gradient(180deg, rgba(250, 245, 233, 0.96), rgba(245, 239, 229, 1));
-  position: relative;
+  gap: 2rem;
 }
 
-.lang {
-  position: absolute;
-  top: clamp(1rem, 3vw, 2rem);
-  right: clamp(1rem, 3vw, 2rem);
-}
-
-.panel {
-  width: min(1120px, 100%);
-}
-
-.intro {
+.hero {
   display: grid;
   gap: 1.5rem;
 }
 
-.badge {
-  justify-self: start;
+.pretitle {
   display: inline-flex;
-  align-items: center;
-  padding: 0.75rem 1rem;
+  padding: 0.6rem 1rem;
   border-radius: 999px;
-  background: rgba(193, 122, 45, 0.14);
+  background: rgba(193, 122, 45, 0.12);
   color: #7a4f24;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  text-transform: uppercase;
 }
 
 .hero h1 {
-  font-size: clamp(2.5rem, 4.4vw, 4.5rem);
-  line-height: 1.02;
-  max-width: 13ch;
-  color: #111111;
+  font-size: clamp(2.1rem, 3vw, 3rem);
+  margin: 0;
 }
 
-.description {
-  max-width: 42rem;
-  color: #49433d;
-  font-size: 1.05rem;
-  line-height: 1.8;
+.subtitle {
+  max-width: 54rem;
+  color: #4f473f;
+  line-height: 1.75;
 }
 
-.actions {
-  display: flex;
-  flex-wrap: wrap;
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
 }
 
-.primary,
-.secondary {
-  display: inline-flex;
+.statLabel {
+  color: #7a6d61;
+  font-size: 0.95rem;
+}
+
+.statValue {
+  margin-top: 0.7rem;
+  font-family: var(--font-mono), ui-sans-serif, system-ui, sans-serif;
+  font-size: 2rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 1rem;
+}
+
+.formCard,
+.summaryCard {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+}
+
+.cardHeader {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.cardHeader h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.cardHeader span {
+  color: #6f655d;
+}
+
+.recordForm,
+.filterGrid {
+  display: grid;
+  gap: 1rem;
+}
+
+.filterGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.formError {
+  color: #b73827;
+  font-size: 0.95rem;
+}
+
+.tableSection {
+  display: grid;
+  gap: 1rem;
+}
+
+.tableHead {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
   align-items: center;
-  justify-content: center;
-  min-width: 11rem;
-  padding: 1rem 1.35rem;
-  border-radius: 1rem;
-  font-weight: 700;
-  text-decoration: none;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  justify-content: space-between;
 }
 
-.primary {
-  background: #c17a2d;
-  color: #fff;
-  box-shadow: 0 18px 40px rgba(193, 122, 45, 0.18);
+.tableTitle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
 }
 
-.primary:hover {
-  transform: translateY(-1px);
+.tableHead h2 {
+  margin: 0;
 }
 
-.secondary {
-  color: #111111;
+.tableHead span {
+  color: #6f655d;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  border-radius: 1.5rem;
+  background: white;
   border: 1px solid rgba(17, 17, 17, 0.08);
-  background: rgba(255, 255, 255, 0.95);
 }
 
-.secondary:hover {
-  background: rgba(242, 234, 212, 0.9);
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+}
+
+.table th,
+.table td {
+  padding: 1rem 1.25rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.06);
+}
+
+.table th {
+  font-size: 0.95rem;
+  color: #5a534a;
+  letter-spacing: 0.02em;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table td {
+  color: #332f2a;
+}
+
+.cellCenter {
+  text-align: center;
+  padding: 2rem;
+  color: #6f655d;
+}
+
+.mono {
+  font-family: var(--font-mono), ui-sans-serif, system-ui, sans-serif;
+}
+
+@media (max-width: 900px) {
+  .grid,
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .tableWrapper {
+    min-width: auto;
+  }
+}
+
+.actionGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }

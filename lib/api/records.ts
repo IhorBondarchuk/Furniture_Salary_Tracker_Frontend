@@ -2,7 +2,6 @@ import { apiFetch } from "@/lib/api/fetcher";
 import type { RecordPayload, SalarySummary, WorkRecord } from "@/lib/types";
 
 export interface RecordsQueryParams {
-  workerId?: string;
   from?: string;
   to?: string;
 }
@@ -13,10 +12,9 @@ interface ApiRef {
   price?: number;
 }
 
-// У списку worker і furniture populated; POST повертає їх як id
+// У списку furniture populated; POST повертає його як id
 interface ApiWorkEntry {
   _id: string;
-  worker: string | ApiRef;
   furniture: string | ApiRef | null;
   quantity: number;
   date: string;
@@ -33,14 +31,11 @@ function asRef(value: string | ApiRef | null): ApiRef | null {
 }
 
 function normalizeWorkRecord(entry: ApiWorkEntry): WorkRecord {
-  const worker = asRef(entry.worker);
   const furniture = asRef(entry.furniture);
   const quantity = Number(entry.quantity);
 
   return {
     id: entry._id,
-    workerId: worker?._id ?? "",
-    workerName: worker?.name ?? worker?._id ?? "",
     itemId: furniture?._id ?? "",
     itemName: furniture?.name ?? "",
     quantity,
@@ -65,7 +60,6 @@ function normalizeSalarySummary(payload: ApiSalary): SalarySummary {
 
 function buildQuery(params: RecordsQueryParams) {
   const query = new URLSearchParams();
-  if (params.workerId) query.set("worker", params.workerId);
   if (params.from) query.set("from", params.from);
   if (params.to) query.set("to", params.to);
   return query.toString();
@@ -79,7 +73,6 @@ export function createRecord(payload: RecordPayload) {
   return apiFetch<ApiWorkEntry>("/work-entries", {
     method: "POST",
     body: JSON.stringify({
-      worker: payload.worker,
       furniture: payload.furniture,
       quantity: payload.quantity,
       date: payload.date,

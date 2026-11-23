@@ -25,15 +25,17 @@
   flex-wrap: wrap;
 }
 
+.nav {
+  display: flex;
+  gap: 0.25rem;
+}
+
 .link,
 .logout {
   font-weight: 700;
   color: #111111;
-  background: none;
-  border: none;
   padding: 0.8rem 1rem;
   border-radius: 999px;
-  cursor: pointer;
   transition: background 0.16s ease;
 }
 
@@ -42,9 +44,13 @@
   background: rgba(193, 122, 45, 0.12);
 }
 
-.role {
+.logout {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.active {
+  background: rgba(193, 122, 45, 0.16);
   color: #7a4f24;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.85rem;
 }
